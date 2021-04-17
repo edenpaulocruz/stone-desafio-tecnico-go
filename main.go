@@ -3,17 +3,18 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"time"
 )
 
 type Account struct {
-	Id         int
-	Name       string
-	Cpf        int
-	Secret     int
-	Balance    float64
-	Created_at time.Time
+	Id         int       `json:"id"`
+	Name       string    `json:"name"`
+	Cpf        int       `json:"cpf"`
+	Secret     int       `json:"secret"`
+	Balance    float64   `json:"balance"`
+	Created_at time.Time `json:"created_at"`
 }
 
 var Accounts []Account = []Account{
@@ -47,7 +48,7 @@ func serverConfig() {
 	routesConfig()
 
 	fmt.Println("Servidor está rodando na porta 8888")
-	http.ListenAndServe(":8888", nil)
+	log.Fatal(http.ListenAndServe(":8888", nil))
 }
 
 func routesConfig() {
@@ -60,6 +61,7 @@ func root(w http.ResponseWriter, r *http.Request) {
 }
 
 func accountsList(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
 	encoder := json.NewEncoder(w)
 	encoder.Encode(Accounts)
 }

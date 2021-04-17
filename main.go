@@ -3,8 +3,10 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"net/http"
+	"strings"
 	"time"
 )
 
@@ -53,17 +55,47 @@ func serverConfig() {
 
 func routesConfig() {
 	http.HandleFunc("/", root)
-	http.HandleFunc("/accounts", accountsList)
+	http.HandleFunc("/accounts", accountsRoutes)
+	http.HandleFunc("/accounts/", accountsRoutes)
 }
 
 func root(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "Olá Stone!")
 }
 
-func accountsList(w http.ResponseWriter, r *http.Request) {
+func accountsRoutes(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
+	urlParts := strings.Split(r.URL.Path, "/")
+
+	if len(urlParts) == 2 || len(urlParts) == 3 && urlParts[2] == "" {
+		switch r.Method {
+		case "GET":
+			accountsList(w, r)
+		case "POST":
+			accountsAdd(w, r)
+		}
+	} else {
+		w.WriteHeader((http.StatusNotFound))
+	}
+}
+
+func accountsList(w http.ResponseWriter, r *http.Request) {
 	encoder := json.NewEncoder(w)
 	encoder.Encode(Accounts)
+}
+
+func accountsAdd(w http.ResponseWriter, r *http.Request) {
+	body, _ := ioutil.ReadAll(r.Body)
+	// Tratar erro
+
+	var newAccount Account
+	json.Unmarshal(body, &newAccount)
+	newAccount.Id = Accounts[len(Accounts)-1].Id + 1
+	newAccount.Created_at = time.Now()
+	Accounts = append(Accounts, newAccount)
+
+	encoder := json.NewEncoder(w)
+	encoder.Encode(newAccount)
 }
 
 func main() {
